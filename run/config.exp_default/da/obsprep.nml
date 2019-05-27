@@ -43,6 +43,7 @@
   err_base=0.2
   err_sses=1.0
   err_superob=1.0
+  sst_type=1
 /
 
 &obsop_nml

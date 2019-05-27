@@ -24,6 +24,9 @@ program obsprep_sst
   real :: thinning(2)  = (/0.0,0.0/)  
   real :: thinning_eq  = 10.0
 
+! input sst type, see obsprep_sst_gds2.f90 for supported SST products
+  integer :: sst_type = SST_TYPE_GDS2
+
   ! variables read in from command line
   character(len=1024) :: obsfile
   character(len=1024) :: outfile
@@ -57,7 +60,7 @@ program obsprep_sst
 #endif
   
   namelist /obsprep_sst_nml/ obid, platid, min_err_lvl, err_base, err_sses,&
-       err_superob, bias_adj, thinning, thinning_eq
+       err_superob, bias_adj, thinning, thinning_eq, sst_type
 
   print *, "------------------------------------------------------------"
   print *, "  SST (GDS2.0 GHRSST format) observation preparation"
@@ -92,7 +95,14 @@ program obsprep_sst
   
   ! read the observations
   print *, "------------------------------------------------------------"
-  call read_sst_gds2_nc(obsfile, basedate, obsin)
+  if (sst_type==SST_TYPE_GDS2) then
+     call read_sst_gds2_nc(obsfile, basedate, obsin)
+  elseif (sst_type==SST_TYPE_CMC0D2) then
+     call read_sst_cmc0d2_nc(obsfile, basedate, obsin)
+  else
+     print*, "ERROR: unsupported SST file type"
+     stop 216
+  endif
 
   if (size(obsin) == 0) then
      print *, "WARNING: no valid observations were read in"
