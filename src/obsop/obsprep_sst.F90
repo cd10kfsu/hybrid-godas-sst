@@ -223,6 +223,7 @@ program obsprep_sst
 
   if(i > 0) then
      call obsio%write(outfile, obsout(1:i), basedate)
+     call addtag_nc(outfile,sst_type)
   end if
 
   r = i*100.0/size(obsin)

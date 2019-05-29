@@ -16,8 +16,11 @@ module obsprep_sst_gds2
      real   :: time
   end type sst_data
 
+  public :: addtag_nc
   integer,parameter,public :: SST_TYPE_GDS2    = 1
   integer,parameter,public :: SST_TYPE_CMC0D2  = 2
+  character(*),parameter :: SST_NAME_GDS2   = "SST_GDS2"
+  character(*),parameter :: SST_NAME_CMC0D2 = "SST_CMC0D2"
 
   public :: read_sst_gds2_nc
   !logical, parameter :: gds2_applybias = .true.
@@ -48,6 +51,29 @@ module obsprep_sst_gds2
 
 
 contains
+
+  subroutine addtag_nc(outfile,sst_type)
+    implicit none
+
+    character(len=*),intent(in) :: outfile
+    integer,         intent(in) :: sst_type
+
+    integer :: ncid,ierr
+
+    call check(nf90_open(trim(outfile),NF90_WRITE,ncid))
+    call check(nf90_redef(ncid))
+    if (sst_type == SST_TYPE_GDS2) then
+       call check(nf90_put_att(ncid,NF90_GLOBAL, "tag", trim(SST_NAME_GDS2)))
+    elseif (sst_type == SST_TYPE_CMC0D2) then
+       call check(nf90_put_att(ncid,NF90_GLOBAL, "tag", trim(SST_NAME_CMC0D2)))
+    else
+       print*, "Error: unrecognized SST obs type:", sst_type
+       stop 213
+    endif
+    call check(nf90_enddef(ncid))
+    call check(nf90_close(ncid))
+
+  endsubroutine addtag_nc
   
 
   subroutine read_sst_gds2_nc(infile, basedate, obs)
