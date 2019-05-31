@@ -2,14 +2,14 @@
 set -e
 
 # Configurables
-START_DATE=20150404
-END_DATE=20150410
+START_DATE=20170506
+END_DATE=20170510
 
 ROOT_DIR=$(pwd)
 GRID_DIR=$ROOT_DIR/DATA/grid
 WORK_DIR=$ROOT_DIR/WORK
-OBSIN_DIR=$ROOT_DIR/DATA/obs/sst_cmc0d2/raw
-OBSOUT_DIR=$ROOT_DIR/DATA/obs/sst_cmc0d2
+OBSIN_DIR=$ROOT_DIR/DATA/obs/sst_ospo/raw
+OBSOUT_DIR=$ROOT_DIR/DATA/obs/sst_ospo
 
 
 #------------------------------------------------------------

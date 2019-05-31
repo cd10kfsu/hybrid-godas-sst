@@ -7,7 +7,6 @@ module obsprep_sst_gds2
   real, parameter :: defaulterr = 1.0
   real, parameter :: badval = -9.99e9
 
-
   type, public :: sst_data
      real   :: lon
      real   :: lat
@@ -17,33 +16,27 @@ module obsprep_sst_gds2
   end type sst_data
 
   public :: addtag_nc
-  integer,parameter,public :: SST_TYPE_GDS2    = 1
-  integer,parameter,public :: SST_TYPE_CMC0D2  = 2
-  character(*),parameter :: SST_NAME_GDS2   = "SST_GDS2"
-  character(*),parameter :: SST_NAME_CMC0D2 = "SST_CMC0D2"
+  integer,parameter,public :: SST_TYPE_L2L3_GDS2  = 1
+  integer,parameter,public :: SST_TYPE_L4_GDS2    = 2
+  ! supported Level 4 SST
+  character(*),parameter :: SST_NAME_L4_CMC0D2 = "CMC0.2deg-CMC-L4-GLOB-v2.0"
+  character(*),parameter :: SST_NAME_L4_OSPO   = "Geo_Polar_Blended-OSPO-L4-GLOB-v1.0"
 
-  public :: read_sst_gds2_nc
-  !logical, parameter :: gds2_applybias = .true.
-  !logical, parameter :: gds2_usenight  = .true.
-  !logical, parameter :: gds2_useday    = .false.
-  !integer, parameter :: gds2_minqc     = 5
-  logical :: gds2_applybias = .true.
-  logical :: gds2_usenight  = .true.
-  logical :: gds2_useday    = .false.
-  integer :: gds2_minqc     = 5
-  namelist /sst_gds2_cfg/ gds2_applybias, gds2_usenight, gds2_useday, gds2_minqc
+  public :: read_sst_l2l3_gds2_nc
+  logical :: l2l3_gds2_applybias = .true.
+  logical :: l2l3_gds2_usenight  = .true.
+  logical :: l2l3_gds2_useday    = .false.
+  integer :: l2l3_gds2_minqc     = 5
+  namelist /sst_l2l3_gds2_cfg/ l2l3_gds2_applybias, l2l3_gds2_usenight, l2l3_gds2_useday, l2l3_gds2_minqc
 
 
-  public :: read_sst_cmc0d2_nc 
-  !logical,parameter :: cmc0d2_useice    = .false.
-  !logical,parameter :: cmc0d2_usenonsea = .false.
-  logical :: cmc0d2_useice    = .false.
-  logical :: cmc0d2_usenonsea = .false.
-  integer :: cmc0d2_seamsk    = 1
-  namelist /sst_cmc0d2_cfg/ cmc0d2_useice, cmc0d2_usenonsea
+  public :: read_sst_l4_gds2_nc 
+  logical :: l4_gds2_useice    = .false.
+  logical :: l4_gds2_usenonsea = .false.
+  integer :: l4_gds2_seamsk    = 1
+  namelist /sst_l4_gds2_cfg/ l4_gds2_useice, l4_gds2_usenonsea
 
 
-  
   interface readField
     module procedure readField2
     module procedure readField3
@@ -52,34 +45,28 @@ module obsprep_sst_gds2
 
 contains
 
-  subroutine addtag_nc(outfile,sst_type)
+  subroutine addtag_nc(outfile,tag)
     implicit none
 
     character(len=*),intent(in) :: outfile
-    integer,         intent(in) :: sst_type
+    character(len=*),intent(in) :: tag
 
     integer :: ncid,ierr
 
     call check(nf90_open(trim(outfile),NF90_WRITE,ncid))
     call check(nf90_redef(ncid))
-    if (sst_type == SST_TYPE_GDS2) then
-       call check(nf90_put_att(ncid,NF90_GLOBAL, "tag", trim(SST_NAME_GDS2)))
-    elseif (sst_type == SST_TYPE_CMC0D2) then
-       call check(nf90_put_att(ncid,NF90_GLOBAL, "tag", trim(SST_NAME_CMC0D2)))
-    else
-       print*, "Error: unrecognized SST obs type:", sst_type
-       stop 213
-    endif
+    call check(nf90_put_att(ncid,NF90_GLOBAL, "tag", trim(tag)))
     call check(nf90_enddef(ncid))
     call check(nf90_close(ncid))
 
   endsubroutine addtag_nc
-  
 
-  subroutine read_sst_gds2_nc(infile, basedate, obs)
+
+  subroutine read_sst_l2l3_gds2_nc(infile, basedate, obs, tag)
     character(len=*),            intent(in)  :: infile
     type(datetime),              intent(out) :: basedate
     type(sst_data), allocatable, intent(out) :: obs(:)
+    character(len=*),            intent(out) :: tag
 
 
     logical :: regular_grid
@@ -100,7 +87,7 @@ contains
     character(len=4) :: proclvl
 
     ! print out obs qc
-    print sst_gds2_cfg 
+    print sst_l2l3_gds2_cfg 
     
     ! open the file, make sure a valid GHRSST GDS2.0 file
     call check(nf90_open(infile, nf90_nowrite, ncid))
@@ -121,6 +108,11 @@ contains
        stop 1
     end if
     print *,"processing level: ", proclvl
+
+    ! aquire id of the SST product
+    call check(nf90_get_att(ncid, nf90_global, 'id', tmp_str))
+    tag = trim(tmp_str)
+
 
     ! what grid type (regular lat/lon or irregular)
     i = 0
@@ -160,7 +152,7 @@ contains
     qc = .true.
     call check(nf90_inq_varid(ncid, "quality_level", vid))
     call check(nf90_get_var(ncid, vid, tmp2d))
-    where (tmp2d < gds2_minqc) qc = .false.
+    where (tmp2d < l2l3_gds2_minqc) qc = .false.
 
 
     !check day/night flag
@@ -176,8 +168,8 @@ contains
        print *, "day obs:  ", count(tmp2d==2)
        print *, "night obs:", count(tmp2d==1)
        
-       if ((.not. gds2_usenight) .or. (.not. gds2_useday)) then
-          where(tmp2d == merge(2,1,gds2_usenight)) qc = .false.
+       if ((.not. l2l3_gds2_usenight) .or. (.not. l2l3_gds2_useday)) then
+          where(tmp2d == merge(2,1,l2l3_gds2_usenight)) qc = .false.
        end if
     end if
 
@@ -225,7 +217,7 @@ contains
     end do; end do
 
     ! bias correction
-    if (gds2_applybias) then
+    if (l2l3_gds2_applybias) then
        call readField(ncid, "sses_bias", tmp2d)
        where(tmp2d == badval) tmp2d = 0.0
        do j=1,ny; do i=1,nx
@@ -275,32 +267,38 @@ contains
     deallocate(tmp2d)
     deallocate(tmp_int)
 
-  end subroutine read_sst_gds2_nc
+  end subroutine read_sst_l2l3_gds2_nc
 
 
 
-  subroutine read_sst_cmc0d2_nc(infile, basedate, obs)
+  subroutine read_sst_l4_gds2_nc(infile, basedate, obs, tag)
     character(len=*),            intent(in)  :: infile
     type(datetime),              intent(out) :: basedate
     type(sst_data), allocatable, intent(out) :: obs(:)
+    character(len=*),            intent(out) :: tag
 
     integer :: ncid, vid, d_x, d_y
     type(sst_data),  allocatable :: obs3(:,:,:)
     real,            allocatable :: tmp1d(:), tmp1d2(:), tmp3d(:,:,:)
     logical,         allocatable :: qc(:,:,:)
     integer(kind=2), allocatable :: tmp_int(:,:,:)
+    logical :: lfound
     integer :: nx, ny, i, j, c
     real    :: r, r2, r3
     character(len=1024) :: tmp_str
 
-    print sst_cmc0d2_cfg
+    print sst_l4_gds2_cfg
 
     ! open the file, make sure a valid CMC 0.2 deg global sea surface temperature analysis
     call check(nf90_open(infile, nf90_nowrite, ncid))
     call check(nf90_get_att(ncid, nf90_global, 'id', tmp_str))
+    tag     = trim(tmp_str)
     tmp_str = adjustl(tmp_str)
-    if (tmp_str(1:26) /= "CMC0.2deg-CMC-L4-GLOB-v2.0") then
-       print *, "ERROR: Not a CMC0.2deg-CMC-L4-GLOB-v2.0 file"
+    lfound = (tmp_str(1:26) == SST_NAME_L4_CMC0D2) .or. &
+             (tmp_str(1:35) == SST_NAME_L4_OSPO)
+    if (.not.lfound) then
+       print *, "ERROR: Not a supported L4 SST file"
+       print *, "       supported files are ", trim(SST_NAME_L4_CMC0D2), " ", trim(SST_NAME_L4_OSPO)
        print *, "       id(inputilfe) = ", trim(tmp_str)
        stop 1
     end if
@@ -338,16 +336,19 @@ contains
     qc = .true.
 
     !check surface mask
-    ! 1b,    2b,  4b,                   8b,     16b
-    ! water land optional_lake_surface sea_ice optional_river_surface
-    if (.not.cmc0d2_usenonsea) then
+    ! For CMC SST:
+    !     1b,    2b,  4b,                   8b,     16b
+    !     water land optional_lake_surface sea_ice optional_river_surface
+    ! For OSPO SST:
+    !     1b, 2b, 4b
+    !     water land ice
+    if (.not.l4_gds2_usenonsea) then
        call check(nf90_inq_varid(ncid, "mask", vid))
        call check(nf90_get_var(ncid, vid, tmp_int))
-       print*, "mask: min,max=", minval(tmp_int), maxval(tmp_int)
-       where (tmp_int/=cmc0d2_seamsk) qc = .false.
+       where (tmp_int/=l4_gds2_seamsk) qc = .false.
     endif
 
-    if (.not.cmc0d2_useice) then ! remove grids with sea ice fraction >0.1%
+    if (.not.l4_gds2_useice) then ! remove grids with sea ice fraction >0.1%
        call readField(ncid, "sea_ice_fraction", tmp3d)
        where (tmp3d==badval) qc = .false.
        where ( qc .and. tmp3d>0.001d0) qc = .false.
@@ -378,6 +379,14 @@ contains
 
     ! estimated error
     call readField(ncid, "analysis_error", tmp3d)
+    !--------------------------------------------
+    ! [FIXME] L4 OSPO SST: the "add_offset" of the SST products is incorrectly
+    !         signed with 273.15f before year 2018. We remove this offset here
+    call readAtt(ncid, "analysis_error", "add_offset", r)
+    if (r>1.d-3) then
+       where (tmp3d/=badval) tmp3d = tmp3d - r
+    endif
+    !--------------------------------------------
     where(tmp3d == badval) tmp3d = defaulterr
     do j=1,ny; do i=1,nx
        obs3(i,j,1)%err = tmp3d(i,j,1)
@@ -418,7 +427,7 @@ contains
     call check(nf90_close(ncid))
     deallocate(tmp_int,tmp1d,tmp1d2,tmp3d,qc,obs3)
 
-  end subroutine read_sst_cmc0d2_nc
+  end subroutine read_sst_l4_gds2_nc
 
 
 
@@ -453,6 +462,7 @@ contains
     integer :: vid 
     real :: v_offset, v_scale, v_min, v_max
     !integer :: msk(size(val,1),size(val,2),size(val,3))
+    !logical :: lgood(size(val,1),size(val,2),size(val,3))
 
     call check(nf90_inq_varid(ncid, vname, vid))
     call check(nf90_get_att(ncid, vid, "add_offset", v_offset))
@@ -472,12 +482,32 @@ contains
     where (val < v_min) val = badval
     where (val > v_max) val = badval   
     where (val /= badval) val = val*v_scale + v_offset
+    
+    !lgood = .true.
+    !where (val==badval) lgood = .false.
     !msk = 0 !
-    !where (val ==badval) msk = 1 !
+    !where (val==badval) msk = 1 !
     !print*, "bad value=", sum(msk) !
+    !print*, "good: min, max =", minval(val,mask=lgood), maxval(val,mask=lgood) !
     !pause "readField3" !
 
   end subroutine readField3
+
+
+  subroutine readAtt(ncid, vname, attname, val)
+    implicit none
+
+    integer,intent(in) :: ncid
+    character(*),intent(in) :: vname
+    character(*),intent(in) :: attname
+    real,intent(inout) :: val
+
+    integer :: vid
+
+    call check(nf90_inq_varid(ncid, vname, vid))
+    call check(nf90_get_att(ncid, vid, attname, val))
+
+  endsubroutine readAtt
 
 
 

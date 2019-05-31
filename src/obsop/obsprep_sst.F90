@@ -25,7 +25,8 @@ program obsprep_sst
   real :: thinning_eq  = 10.0
 
 ! input sst type, see obsprep_sst_gds2.f90 for supported SST products
-  integer :: sst_type = SST_TYPE_GDS2
+  integer :: sst_type = SST_TYPE_L2L3_GDS2
+  character(len=1024) :: tag
 
   ! variables read in from command line
   character(len=1024) :: obsfile
@@ -95,10 +96,10 @@ program obsprep_sst
   
   ! read the observations
   print *, "------------------------------------------------------------"
-  if (sst_type==SST_TYPE_GDS2) then
-     call read_sst_gds2_nc(obsfile, basedate, obsin)
-  elseif (sst_type==SST_TYPE_CMC0D2) then
-     call read_sst_cmc0d2_nc(obsfile, basedate, obsin)
+  if (sst_type==SST_TYPE_L2L3_GDS2) then
+     call read_sst_l2l3_gds2_nc(obsfile, basedate, obsin, tag)
+  elseif (sst_type==SST_TYPE_L4_GDS2) then
+     call read_sst_l4_gds2_nc(obsfile, basedate, obsin, tag)
   else
      print*, "ERROR: unsupported SST file type"
      stop 216
@@ -223,7 +224,7 @@ program obsprep_sst
 
   if(i > 0) then
      call obsio%write(outfile, obsout(1:i), basedate)
-     call addtag_nc(outfile,sst_type)
+     call addtag_nc(outfile, trim(tag))
   end if
 
   r = i*100.0/size(obsin)
