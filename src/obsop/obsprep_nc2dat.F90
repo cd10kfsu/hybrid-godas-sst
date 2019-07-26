@@ -16,10 +16,16 @@ program obsprep_nc2dat
   real,              dimension(:), allocatable :: inc_in
   type(datetime) :: dt
 
-  real(4) :: wk(9)
+  logical :: obs_for_cfsletkf = .true. 
+  real(4),allocatable :: wk(:)
   integer :: obscnv1(100), obscnv2(100)
   integer :: obscnv_cnt = 0
-  
+
+  if (obs_for_cfsletkf) then
+     allocate(wk(7))  ! cfs-letkf
+  else
+     allocate(wk(9))  ! hybrid-godas
+  endif
 
   ! read in the command line arguments
   i = command_argument_count()
@@ -72,13 +78,18 @@ program obsprep_nc2dat
      wk(4)=obs_in(i)%dpth
      wk(5)=obs_in(i)%val
      wk(6)=obs_in(i)%err
-     wk(7)=inc_in(i)+obs_in(i)%val
-     wk(8)=merge(1,0,obs_in(i)%qc==0)
-     wk(9)=obs_in(i)%hr
+     if (obs_for_cfsletkf) then   ! obs for CFS-LETKF
+        wk(7)=obs_in(i)%hr
+     else                         ! obs for hybrid-godas
+        wk(7)=inc_in(i)+obs_in(i)%val
+        wk(8)=merge(1,0,obs_in(i)%qc==0)
+        wk(9)=obs_in(i)%hr
+     endif
      write(91) wk
   end do
   close(91)
 !  r = 0
 !  select (
 !  wk(1) = 
+  deallocate(wk)
 end program obsprep_nc2dat

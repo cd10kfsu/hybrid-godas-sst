@@ -197,6 +197,9 @@ program obsprep_sst
         ! obsout(i)%lat  = grid_lats(x,y) !if we just want the grid center
         ! obsout(i)%lon  = grid_lons(x,y)
         obsout(i)%dpth = 0.0    
+        if (sst_type==SST_TYPE_L4_GDS2) then ! L4 SST is sea surface Foundation temperature (10m)
+           obsout(i)%dpth = 10.0
+        endif
         obsout(i)%hr   = bin_time(x,y)
         obsout(i)%val  = bin_val(x,y) - 273.15 + bias_adj
 
