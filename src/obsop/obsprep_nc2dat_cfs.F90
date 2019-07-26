@@ -1,4 +1,4 @@
-program obsprep_nc2dat
+program obsprep_nc2dat_cfs
   use obscom_obsio
   use datetime_module
   
@@ -16,7 +16,7 @@ program obsprep_nc2dat
   real,              dimension(:), allocatable :: inc_in
   type(datetime) :: dt
 
-  real(4) :: wk(9)
+  real(4) :: wk(7)
   integer :: obscnv1(100), obscnv2(100)
   integer :: obscnv_cnt = 0
 
@@ -71,13 +71,11 @@ program obsprep_nc2dat
      wk(4)=obs_in(i)%dpth
      wk(5)=obs_in(i)%val
      wk(6)=obs_in(i)%err
-     wk(7)=inc_in(i)+obs_in(i)%val
-     wk(8)=merge(1,0,obs_in(i)%qc==0)
-     wk(9)=obs_in(i)%hr
+     wk(7)=obs_in(i)%hr
      write(91) wk
   end do
   close(91)
 !  r = 0
 !  select (
 !  wk(1) = 
-end program obsprep_nc2dat
+end program obsprep_nc2dat_cfs

@@ -6,7 +6,7 @@ START_DATE=20060601
 END_DATE=20060602
 
 ROOT_DIR=$(pwd)
-WORK_DIR=$ROOT_DIR/obs_nc2dat
+WORK_DIR=$ROOT_DIR/obs_nc2dat_cfs
 OBSIN_DIR=$ROOT_DIR/DATA/obs/sst_cmc0d2  #obs in (.nc)
 OBSOUT_DIR=$ROOT_DIR/DATA/obs/sst_cmc0d2/CFSOBS
 
@@ -17,7 +17,7 @@ ulimit -s unlimited
 mkdir -p $WORK_DIR
 cd $WORK_DIR/
 # copy executable file 
-cp $ROOT_DIR/build/obsprep_nc2dat ./ 
+cp $ROOT_DIR/build/obsprep_nc2dat_cfs ./ 
 
 
 # Loop for all obs
@@ -32,7 +32,7 @@ do
 	# run nc2dat: ./obsprep_nc2dat <file in> <file out> 
 	for f in $OBSIN_DIR/$yr/$cdate/*.nc; do
 	    echo $f
-	    ./obsprep_nc2dat $f out.${cdate}${basehour}.dat
+	    ./obsprep_nc2dat_cfs $f out.${cdate}${basehour}.dat
         done
 
         mv out.${cdate}${basehour}.dat $odir/${cdate}.dat

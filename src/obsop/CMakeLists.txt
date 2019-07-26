@@ -114,3 +114,12 @@ add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
 set_target_properties(${EXE} PROPERTIES
     COMPILE_FLAGS "$ENV{OBSOP_COMPILE_FLAGS}")
+
+
+# obs2dat_cfs
+set(SRCS obsprep_nc2dat_cfs.F90)
+set(EXE obsprep_nc2dat_cfs)
+add_executable(${EXE} ${SRCS})
+target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
+set_target_properties(${EXE} PROPERTIES
+    COMPILE_FLAGS "$ENV{OBSOP_COMPILE_FLAGS}")
