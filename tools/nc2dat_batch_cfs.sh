@@ -2,8 +2,8 @@
 set -e
 
 #Configurations
-START_DATE=20060601
-END_DATE=20060602
+START_DATE=20060603
+END_DATE=20060606
 
 ROOT_DIR=$(pwd)
 WORK_DIR=$ROOT_DIR/obs_nc2dat_cfs
@@ -26,7 +26,8 @@ while [[ $cdate -le $END_DATE ]]
 do
 	echo Processing $cdate
         yr=${cdate:0:4}
-        odir=$OBSOUT_DIR/$yr/$cdate
+        yrmn=${cdate:0:6}
+        odir=$OBSOUT_DIR/$yr/$yrmn/$cdate
 	mkdir -p $odir
 
 	# run nc2dat: ./obsprep_nc2dat <file in> <file out> 
