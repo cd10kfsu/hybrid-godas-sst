@@ -2,15 +2,15 @@
 set -e
 
 #Configurations
-START_DATE=20060603
-END_DATE=20060606
+START_DATE=20060601
+END_DATE=20060604
 
 ROOT_DIR=$(pwd)
-WORK_DIR=$ROOT_DIR/obs_nc2dat_cfs
-OBSIN_DIR=$ROOT_DIR/DATA/obs/sst_cmc0d2  #obs in (.nc)
-OBSOUT_DIR=$ROOT_DIR/DATA/obs/sst_cmc0d2/CFSOBS
+WORK_DIR=$ROOT_DIR/obs_nc2dat_cfs     #
+OBSIN_DIR=$ROOT_DIR/DATA/obs/ssh_adt  # obs in (.nc)
+OBSOUT_DIR=$OBSIN_DIR/CFSOBS          #
 
-basehour="12"
+basehour=""                           #
 ulimit -s unlimited
 
 # setup working directory
