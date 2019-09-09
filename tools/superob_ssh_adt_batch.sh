@@ -7,7 +7,7 @@ END_DATE=20060604
 
 ROOT_DIR=$(pwd)
 GRID_DIR=$ROOT_DIR/DATA/grid
-WORK_DIR=$ROOT_DIR/WORK
+WORK_DIR=$ROOT_DIR/WORK_ssh
 OBSIN_DIR=$ROOT_DIR/DATA/obs/ssh_adt/raw
 OBSOUT_DIR=$ROOT_DIR/DATA/obs/ssh_adt
 
@@ -34,26 +34,46 @@ do
     echo Processing $cdate
     yr=${cdate:0:4}
 
-    # combine all the satellite tracks into a single day
-    odir=$OBSOUT_DIR/$yr/$cdate
-    mkdir -p $odir
- 
+    ## do the superobbing based on input files
+    #f_all=''
+    #for f in $OBSIN_DIR/$yr/$cdate/rads_adt_*.nc; do
+    #    echo "ln -sf $f ."
+    #    ln -sf $f .
+    #    f2=`echo $f|rev|cut -d "/" -f 1 |rev`
+    #    f_all="$f_all $f2"
+    #done
+    #echo "$f_all"
+    #./obsprep_adt tmp.${cdate}.nc $f_all
+
+
+    ## combine all the satellite tracks into a single day
+    #odir=$OBSOUT_DIR/$yr/$cdate
+    #mkdir -p $odir
+    # 
+    #basedate=$(date "+%Y,%m,%d,0,0,0" -d "$cdate")
+    #./obsprep_combine -basedate $basedate tmp.${cdate}.nc $odir/$cdate.nc
+
+
     # do the superobbing based on input files
-    f_all=''
     for f in $OBSIN_DIR/$yr/$cdate/rads_adt_*.nc; do
         echo "ln -sf $f ."
         ln -sf $f .
         f2=`echo $f|rev|cut -d "/" -f 1 |rev`
-        f_all="$f_all $f2"
+        echo "./obsprep_adt sob.$f2 $f"
+        ./obsprep_adt sob.$f2 $f
     done
-    echo "$f_all"
-    ./obsprep_adt tmp.${cdate}.nc $f_all
 
+
+    # combine all the satellite tracks into a single day
+    odir=$OBSOUT_DIR/$yr/$cdate
+    mkdir -p $odir
+ 
     basedate=$(date "+%Y,%m,%d,0,0,0" -d "$cdate")
-    ./obsprep_combine -basedate $basedate tmp.${cdate}.nc $odir/$cdate.nc
+    echo "./obsprep_combine -basedate $basedate sob.*.nc $odir/$cdate.nc"
+    ./obsprep_combine -basedate $basedate sob.*.nc $odir/$cdate.nc
 
     rm -f rads_adt_*.nc
-    rm -f tmp.${cdate}.nc
+    rm -f sob.*.nc
 
     
     # end of loop, prepare for the next date
