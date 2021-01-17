@@ -63,12 +63,12 @@ set_target_properties(${EXE} PROPERTIES
     COMPILE_FLAGS "$ENV{OBSOP_COMPILE_FLAGS}")		      
 
 
-# # obs prep - legacy insitu
-# file(GLOB SRCS "obsprep_insitu_legacy.[f,F]90")
-# set(SRCS ${SRCS} compute_profile_error.f90 linked_list.f90)
-# set(EXE  obsprep_insitu_legacy)
-# add_executable(${EXE} ${SRCS})
-# target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
+# obs prep - legacy insitu
+file(GLOB SRCS "obsprep_insitu_legacy.[f,F]90")
+set(SRCS ${SRCS} compute_profile_error.f90 linked_list.f90)
+set(EXE  obsprep_insitu_legacy)
+add_executable(${EXE} ${SRCS})
+target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
 
 
 # obs prep - sst

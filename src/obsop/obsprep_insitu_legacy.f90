@@ -3,6 +3,7 @@ program obsprep_insitu_legacy
   use obscom_grid
   use cubic_spline
   use compute_profile_error, only : cmpTz
+  use datetime_module
 
   use netcdf
   implicit none
@@ -33,6 +34,9 @@ program obsprep_insitu_legacy
   real, allocatable :: ob_lon(:)
   real, allocatable :: ob_lat(:)
   real              :: ob_missing_value
+  type(datetime)    :: ob_date
+  integer           :: ob_year, ob_month, ob_day
+  character(10)     :: sdate ! obs date string from file, format: 2010-04-02
   
   ! parameters read in from namelist
   character(len=:), allocatable :: obsfile
@@ -111,6 +115,14 @@ program obsprep_insitu_legacy
      call check(nf90_inq_varid(ncid, merge("temp","salt",i==1), vid))
      call check(nf90_get_var(ncid, vid, ob_val))
      call check(nf90_get_att(ncid, vid, "missing_value", ob_missing_value))
+
+     call check(nf90_get_att(ncid, nf90_global, "Date", sdate))
+     read(sdate(1:4), "(i4)") ob_year
+     read(sdate(6:7), "(i2)") ob_month
+     read(sdate(9:10),"(i2)") ob_day
+     ob_date = datetime(ob_year,ob_month,ob_day,0,0,0,0)
+     print *, "base date/time: ", ob_date%isoformat()
+     
      call check(nf90_close(ncid))
 
      ! for each profile...
@@ -163,7 +175,7 @@ program obsprep_insitu_legacy
 
   ! all done, write out final observations  
   print *, "writing observatiosn to ",outfile
-  call obsio%write(outfile, obs(1:num_obs))
+  call obsio%write(outfile, obs(1:num_obs), ob_date)
   print *, num_obs, "total observations written"
 
 
